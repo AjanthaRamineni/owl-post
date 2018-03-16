@@ -78,7 +78,7 @@ def fill_details(connection, key, item, task):
     else:
         # For non-Thing objects, ask for further detail
         if key != 'Thing':
-            obj_name = ' '
+            obj_name = ''
             # Ask for label
             if key == 'Author':
                 first_name = raw_input("First name: ")
