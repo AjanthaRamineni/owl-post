@@ -31,6 +31,8 @@ def prepare_query(connection):
     template_mod = getattr(queries, template_choice)
     params = template_mod.get_params(connection)
 
+    print params
+
     for key, val in params.items():
         print(str(key) + ': ' + str(val) + '\n')
         fill_details(connection, key, val, template_choice)
@@ -67,7 +69,7 @@ def fill_details(connection, key, item, task):
     try:
         sub_task = "make_" + item.type
     except TypeError as e:
-        sub_task = None   #Anything using a Thing will have a blank type
+        sub_task = None   # Anything using a Thing will have a blank type
 
     print("Fill in the values for the following (if you do not have a value, leave blank):")
     # Check if user knows n number
@@ -115,7 +117,7 @@ def fill_details(connection, key, item, task):
             if obj_name:
                 item.name = scrub(obj_name)
                 # Check if label already exists
-                match = match_input(connection, item.name, item.type)
+                match = match_input(connection, item.name, item.type, True)
 
                 if not match:
                     if sub_task != task:
@@ -168,8 +170,8 @@ def fill_details(connection, key, item, task):
                     print("The n number for this " + item.type + " is " + item.n_number)
                     return
             else:
-                #TODO: Decide what to do if no name
-                pass;
+                # TODO: Decide what to do if no name
+                pass
 
         if task == 'make_grant' and key in ['AwardingDepartment', 'SubContractedThrough', 'AdministeredBy', 'SupportedWork', 'Contributor']:
             pass
@@ -182,7 +184,7 @@ def fill_details(connection, key, item, task):
             print("Look up the n number and try again.")
 
 
-def match_input(connection, label, category):
+def match_input(connection, label, category, exact_match):
 
     details = queries.find_n_for_label.get_params(connection)
     details['Thing'].extra = label
@@ -195,6 +197,16 @@ def match_input(connection, label, category):
     for key, val in matches.items():
         choices[count] = (key, val)
         count += 1
+
+    if exact_match:
+        if choices:
+            for key, val in choices.items():
+                number, lab = val
+                if lab.lower() == label.lower():
+                    match = number
+                    return match
+        match = None
+        return None
 
     index = -1
     if choices:
