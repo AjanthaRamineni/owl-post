@@ -117,6 +117,11 @@ def fill_details(connection, key, item, task):
             if obj_name:
                 item.name = scrub(obj_name)
                 # Check if label already exists
+                if item.type == 'contributor' and key == 'Contributor_PI':
+                    item.type = 'contributor_pi'
+                elif item.type == 'contributor' and key == 'Contributor_CoPI':
+                    item.type = 'contributor_copi'
+
                 match = match_input(connection, item.name, item.type, True)
 
                 if not match:
@@ -127,7 +132,7 @@ def fill_details(connection, key, item, task):
                             try:
                                 update_path = getattr(queries, sub_task)
                                 sub_params = update_path.get_params(connection)
-                                if task == 'make_grant' and key in ['AwardingDepartment', 'SubContractedThrough', 'AdministeredBy', 'SupportedWork', 'Contributor']:
+                                if task == 'make_grant' and key in ['AwardingDepartment', 'SubContractedThrough', 'AdministeredBy', 'SupportedWork', 'Contributor_PI', 'Contributor_CoPI']:
                                     details = item.get_details()
                                     for feature in details:
                                         item_info = raw_input(str(feature) + ": ")
@@ -139,7 +144,7 @@ def fill_details(connection, key, item, task):
                                         sub_params = {'Organization': item}
                                     elif task == 'make_grant' and key == 'SupportedWork':
                                         sub_params = {'Article': item, 'Author': None, 'Journal': None}
-                                    elif task == 'make_grant' and key == 'Contributor':
+                                    elif task == 'make_grant' and (key == 'Contributor_PI' or key == 'Contributor_CoPI'):
                                         author = Author(connection)
                                         print "Author details:"
                                         details = author.get_details()
@@ -154,15 +159,17 @@ def fill_details(connection, key, item, task):
                                         except Exception as e:
                                             print e
                                             print("Owl Post can not create a(n) " + author.type +
-                                              " at this time. Please go to your vivo site and make it manually.")
+                                                    " at this time. Please go to your vivo site and make it manually.")
 
                                         sub_params = {'Contributor': item, 'Author': author}
+
                                 else:
                                     sub_params[key] = item
                                 print sub_task
                                 response = update_path.run(connection, **sub_params)
                                 print(response)
                             except Exception as e:
+                                print e
                                 print("Owl Post can not create a(n) " + item.type + " at this time. Please go to your vivo site and make it manually.")
                             return
                 else:
@@ -173,7 +180,7 @@ def fill_details(connection, key, item, task):
                 # TODO: Decide what to do if no name
                 pass
 
-        if task == 'make_grant' and key in ['AwardingDepartment', 'SubContractedThrough', 'AdministeredBy', 'SupportedWork', 'Contributor']:
+        if task == 'make_grant' and key in ['AwardingDepartment', 'SubContractedThrough', 'AdministeredBy', 'SupportedWork', 'Contributor_PI', 'Contributor_CoPI']:
             pass
         elif key == 'Thing' or obj_name:
             details = item.get_details()
@@ -189,6 +196,8 @@ def match_input(connection, label, category, exact_match):
     details = queries.find_n_for_label.get_params(connection)
     details['Thing'].extra = label
     details['Thing'].type = category
+
+    print category
 
     matches = queries.find_n_for_label.run(connection, **details)
 
