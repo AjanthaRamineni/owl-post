@@ -22,19 +22,16 @@ def get_config(config_path):
 
 
 def prepare_query(connection):
-    template_type = get_template_type('queries')
+    template_choice = get_template_type('queries')
 
-    head, sep, tail = template_type.partition('.')
-    template_choice = head
+    # head, sep, tail = template_type.partition('.')
+    # template_choice = head
     print(template_choice)
 
     template_mod = getattr(queries, template_choice)
     params = template_mod.get_params(connection)
 
-    print(params)
-
     for key, val in params.items():
-        print(str(key) + ': ' + str(val) + '\n')
         fill_details(connection, key, val, template_choice)
 
     response = template_mod.run(connection, **params)
@@ -42,22 +39,16 @@ def prepare_query(connection):
 
 
 def get_template_type(folder):
-    direc = dir(queries)
-    p = re.compile("__[a-zA-Z]+__")
-
+    available_queries = catalog.list_queries()
     template_options = {}
-    count = 1
-    for file in direc:
-        if file.startswith('__init__') or file.endswith('.pyc') or p.match(file):
-            pass
-        else:
-            template_options[count] = file
-            count += 1
+
+    for c, query in enumerate(available_queries, 1):
+        template_options[c] = query
 
     for key, val in template_options.items():
-        print(str(key) + ': ' + str(val) + '\n')
+        print(str(key) + ': ' + val + '\n')
 
-    index = input("Enter number of query: ")
+    index = int(input("Enter number of query: "))
     return template_options.get(index)
 
 
