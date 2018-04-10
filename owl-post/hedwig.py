@@ -15,6 +15,31 @@ from vivo_queries.vivo_connect import Connection
 import wos
 from wos_connect import WOSnnection
 
+class UpdateLog(object):
+    def __init__(self):
+        self.articles = []
+        self.authors = []
+        self.journals = []
+        self.publishers = []
+
+    def add_to_log(self, collection, label, uri):
+        getattr(self, collection).append((label, uri))
+
+    def create_file(self, filepath):
+        with open(filepath, 'w') as msg:
+            msg.write('New publications: \n')
+            for pub in self.articles:
+                msg.write(pub[0] + '   ---   ' + pub[1] + '\n')
+            msg.write('\n\nNew publishers: \n')
+            for publisher in self.publishers:
+                msg.write(publisher[0] + '   ---   ' + publisher[1] + '\n')
+            msg.write('\n\nNew journals: \n')
+            for journal in self.journals:
+                msg.write(journal[0] + '   ---   ' + journal[1] + '\n')
+            msg.write('\n\nNew people: \n')
+            for person in self.authors:
+                msg.write(person[0] + '   ---   ' + person[1] + '\n')
+
 def get_config(config_path):
     try:
         with open(config_path, 'r') as config_file:
@@ -42,7 +67,7 @@ def bib2csv(bib_data):
             csv_data[row][col_name] = v.encode('utf-8').strip()
     return csv_data
 
-def process(connection, data):
+def process(connection, data, log):
     summary = Counter({})
     params = queries.make_academic_article.get_params(connection)
     article = params['Article']
@@ -65,8 +90,10 @@ def process(connection, data):
             if j_details['Journal'].n_number:
                 journal_n = j_details['Journal'].n_number
                 summary['Journals'] = 1
+                log.add_to_log('journals', j_details['Journal'].name, (connection.vivo_url + j_details['Journal'].n_number))
                 if j_details['Publisher'].name:
                     summary['Publishers'] = 1
+                    log.add_to_log('publishers', j_details['Publisher'].name, (connection.vivo_url + j_details['Publisher'].n_number))
 
         journal.n_number = journal_n
     except KeyError as e:
@@ -93,7 +120,7 @@ def process(connection, data):
                     article_n = None
                     article.n_number = None
 
-        author_count = add_authors(connection, article, data)
+        author_count = add_authors(connection, article, data, log)
         summary['Authors'] = author_count
 
     if not article_n:
@@ -139,8 +166,9 @@ def process(connection, data):
         print(response)
         if response:
             summary['Articles'] = 1
+            log.add_to_log('articles', params['Article'].name, (connection.vivo_url + params['Article'].n_number))
 
-        author_count = add_authors(connection, article, data)
+        author_count = add_authors(connection, article, data, log)
         summary['Authors'] = author_count
 
     return summary
@@ -215,7 +243,7 @@ def create_journal(connection, journal_name, publisher_name):
     else:
         return None
 
-def add_authors(connection, article, data):
+def add_authors(connection, article, data, log):
     author_count = 0
     author_str = data['author']
     authors = author_str.split(" and ")
@@ -236,6 +264,7 @@ def add_authors(connection, article, data):
             print(response)
             if response and not exists:
                 author_count += 1
+                log.add_to_log('authors', args['Author'].name, (connection.vivo_url + args['Author'].n_number))
     return author_count
 
 def match_authors(connection, label, data):
@@ -244,13 +273,14 @@ def match_authors(connection, label, data):
     deets['Thing'].type = 'person'
 
     current_list = queries.find_n_for_label.run(connection, **deets)
-    print(current_list)
     choices = {}
+
     #perfect match
     for key, val in current_list.items():
         #Manually added names may end with a blank space
-        if val.endswith(" "):
-            val = val[:-1]
+        # if val.endswith(" "):
+        #     val = val[:-1]
+        val = val.rstrip()
         if label.lower() == val.lower():
             choices[key] = val
 
@@ -342,14 +372,16 @@ def main(argv1):
     bib_data = loads(bib_str)
     csv_data = bib2csv(bib_data)
 
+    log = UpdateLog()
     full_summary = Counter({'Articles': 0, 'Authors': 0, 'Journals': 0, 'Publishers': 0})
     for entry in csv_data.items():
         number, data = entry
-        summary = process(connection, data)
+        summary = process(connection, data, log)
         full_summary = full_summary + summary
 
     print("====== Summary of new items:")
     print(full_summary)
+    log.create_file('data_out/upload.txt')
 
 if __name__ == '__main__':
     main(sys.argv[1])

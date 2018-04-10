@@ -1,12 +1,12 @@
 import os
 import os.path
+import pprint
 import sys
 import yaml
-import pprint
 import re
 
-
-from vivo_connect import Connection
+# from vivo_queries import catalog
+from vivo_queries.vivo_connect import Connection
 from vivo_queries.vdos.author import Author
 from vivo_queries import queries
 
@@ -31,7 +31,7 @@ def prepare_query(connection):
     template_mod = getattr(queries, template_choice)
     params = template_mod.get_params(connection)
 
-    print params
+    print(params)
 
     for key, val in params.items():
         print(str(key) + ': ' + str(val) + '\n')
@@ -69,29 +69,29 @@ def fill_details(connection, key, item, task):
     try:
         sub_task = "make_" + item.type
     except TypeError as e:
-        sub_task = None   # Anything using a Thing will have a blank type
+        sub_task = None   #Anything using a Thing will have a blank type
 
     print("Fill in the values for the following (if you do not have a value, leave blank):")
-    # Check if user knows n number
-    obj_n = raw_input("N number: ")
+    #Check if user knows n number
+    obj_n = input("N number: ")
     if obj_n:
         item.n_number = obj_n
-        # TODO: add label check
+        #TODO: add label check
     else:
-        # For non-Thing objects, ask for further detail
+        #For non-Thing objects, ask for further detail
         if key != 'Thing':
-            obj_name = ''
-            # Ask for label
+            obj_name=''
+            #Ask for label
             if key == 'Author':
-                first_name = raw_input("First name: ")
+                first_name = input("First name: ")
                 if first_name:
                     item.first = first_name
 
-                middle_name = raw_input("Middle name: ")
+                middle_name = input("Middle name: ")
                 if middle_name:
                     item.middle = middle_name
 
-                last_name = raw_input("Last name: ")
+                last_name = input("Last name: ")
                 if last_name:
                     item.last = last_name
 
@@ -112,7 +112,7 @@ def fill_details(connection, key, item, task):
                     obj_name = middle_name
 
             else:
-                obj_name = raw_input(key + " name/title: ")
+                obj_name = input(key + " name/title: ")
 
             if obj_name:
                 item.name = scrub(obj_name)
@@ -127,7 +127,7 @@ def fill_details(connection, key, item, task):
                 if not match:
                     if sub_task != task:
                         # If this entity is not the original query, make entity
-                        create_obj = raw_input("This " + item.type + " is not in the database. Would you like to add it? (y/n) ")
+                        create_obj = input("This " + item.type + " is not in the database. Would you like to add it? (y/n) ")
                         if create_obj == 'y' or create_obj == 'Y':
                             try:
                                 update_path = getattr(queries, sub_task)
@@ -135,21 +135,21 @@ def fill_details(connection, key, item, task):
                                 if task == 'make_grant' and key in ['AwardingDepartment', 'SubContractedThrough', 'AdministeredBy', 'SupportedWork', 'Contributor_PI', 'Contributor_CoPI']:
                                     details = item.get_details()
                                     for feature in details:
-                                        item_info = raw_input(str(feature) + ": ")
+                                        item_info = input(str(feature) + ": ")
                                         setattr(item, feature, item_info)
 
                                     if (task == 'make_grant' and key == 'AwardingDepartment') or (task == 'make_grant' and key == 'SubContractedThrough'):
-                                        sub_params = {'Department': item}
+                                        sub_params = {'Organization': item}
                                     elif task == 'make_grant' and key == 'AdministeredBy':
                                         sub_params = {'Organization': item}
                                     elif task == 'make_grant' and key == 'SupportedWork':
                                         sub_params = {'Article': item, 'Author': None, 'Journal': None}
                                     elif task == 'make_grant' and (key == 'Contributor_PI' or key == 'Contributor_CoPI'):
                                         author = Author(connection)
-                                        print "Author details:"
+                                        print("Author details:")
                                         details = author.get_details()
                                         for feature in details:
-                                            item_info = raw_input(str(feature) + ": ")
+                                            item_info = input(str(feature) + ": ")
                                             setattr(author, feature, item_info)
 
                                         try:
@@ -157,19 +157,19 @@ def fill_details(connection, key, item, task):
                                             sub_params2 = {'Author': author}
                                             response2 = sub_update_path.run(connection, **sub_params2)
                                         except Exception as e:
-                                            print e
+                                            print(e)
                                             print("Owl Post can not create a(n) " + author.type +
-                                                    " at this time. Please go to your vivo site and make it manually.")
+                                                  " at this time. Please go to your vivo site and make it manually.")
 
                                         sub_params = {'Contributor': item, 'Author': author}
 
                                 else:
                                     sub_params[key] = item
-                                print sub_task
+                                print(sub_task)
                                 response = update_path.run(connection, **sub_params)
                                 print(response)
                             except Exception as e:
-                                print e
+                                print(e)
                                 print("Owl Post can not create a(n) " + item.type + " at this time. Please go to your vivo site and make it manually.")
                             return
                 else:
@@ -185,7 +185,7 @@ def fill_details(connection, key, item, task):
         elif key == 'Thing' or obj_name:
             details = item.get_details()
             for feature in details:
-                item_info = raw_input(str(feature) + ": ")
+                item_info = input(str(feature) + ": ")
                 setattr(item, feature, item_info)
         else:
             print("Look up the n number and try again.")
@@ -197,7 +197,7 @@ def match_input(connection, label, category, exact_match):
     details['Thing'].extra = label
     details['Thing'].type = category
 
-    print category
+    print(category)
 
     matches = queries.find_n_for_label.run(connection, **details)
 

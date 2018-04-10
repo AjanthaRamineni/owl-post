@@ -1,0 +1,18 @@
+email: 'username@school.edu'
+password: 'MyPassword'
+
+update_endpoint: 'http://school.edu/vivo/api/sparqlUpdate'
+query_endpoint: 'http://school.edu/vivo/api/sparqlQuery'
+
+upload_url: 'http://school.edu/individual/'
+
+input_file: 'data_in/your_file.bib'
+
+folder_for_logs: 'path/to/folder/'
+
+wos_credentials: '"Username:Password" encoded in base 64'
+
+database: 'database_name'
+database_port: 'database_port'
+database_user: 'database_username'
+database_pw: 'database_password'
