@@ -5,7 +5,7 @@ import sys
 import yaml
 import re
 
-# from vivo_queries import catalog
+from vivo_queries import catalog
 from vivo_queries.vivo_connect import Connection
 from vivo_queries.vdos.author import Author
 from vivo_queries import queries
@@ -48,7 +48,7 @@ def get_template_type(folder):
     for key, val in template_options.items():
         print(str(key) + ': ' + val + '\n')
 
-    index = int(input("Enter number of query: "))
+    index = int(raw_input("Enter number of query: "))
     return template_options.get(index)
 
 
@@ -64,7 +64,8 @@ def fill_details(connection, key, item, task):
 
     print("Fill in the values for the following (if you do not have a value, leave blank):")
     #Check if user knows n number
-    obj_n = input("N number: ")
+    obj_n = raw_input("N number: ")
+
     if obj_n:
         item.n_number = obj_n
         #TODO: add label check
@@ -74,15 +75,15 @@ def fill_details(connection, key, item, task):
             obj_name=''
             #Ask for label
             if key == 'Author':
-                first_name = input("First name: ")
+                first_name = raw_input("First name: ")
                 if first_name:
                     item.first = first_name
 
-                middle_name = input("Middle name: ")
+                middle_name = raw_input("Middle name: ")
                 if middle_name:
                     item.middle = middle_name
 
-                last_name = input("Last name: ")
+                last_name = raw_input("Last name: ")
                 if last_name:
                     item.last = last_name
 
@@ -103,7 +104,7 @@ def fill_details(connection, key, item, task):
                     obj_name = middle_name
 
             else:
-                obj_name = input(key + " name/title: ")
+                obj_name = raw_input(key + " name/title: ")
 
             if obj_name:
                 item.name = scrub(obj_name)
@@ -118,7 +119,7 @@ def fill_details(connection, key, item, task):
                 if not match:
                     if sub_task != task:
                         # If this entity is not the original query, make entity
-                        create_obj = input("This " + item.type + " is not in the database. Would you like to add it? (y/n) ")
+                        create_obj = raw_input("This " + item.type + " is not in the database. Would you like to add it? (y/n) ")
                         if create_obj == 'y' or create_obj == 'Y':
                             try:
                                 update_path = getattr(queries, sub_task)
@@ -126,7 +127,7 @@ def fill_details(connection, key, item, task):
                                 if task == 'make_grant' and key in ['AwardingDepartment', 'SubContractedThrough', 'AdministeredBy', 'SupportedWork', 'Contributor_PI', 'Contributor_CoPI']:
                                     details = item.get_details()
                                     for feature in details:
-                                        item_info = input(str(feature) + ": ")
+                                        item_info = raw_input(str(feature) + ": ")
                                         setattr(item, feature, item_info)
 
                                     if (task == 'make_grant' and key == 'AwardingDepartment') or (task == 'make_grant' and key == 'SubContractedThrough'):
@@ -140,7 +141,7 @@ def fill_details(connection, key, item, task):
                                         print("Author details:")
                                         details = author.get_details()
                                         for feature in details:
-                                            item_info = input(str(feature) + ": ")
+                                            item_info = raw_input(str(feature) + ": ")
                                             setattr(author, feature, item_info)
 
                                         try:
@@ -176,7 +177,7 @@ def fill_details(connection, key, item, task):
         elif key == 'Thing' or obj_name:
             details = item.get_details()
             for feature in details:
-                item_info = input(str(feature) + ": ")
+                item_info = raw_input(str(feature) + ": ")
                 setattr(item, feature, item_info)
         else:
             print("Look up the n number and try again.")
@@ -214,7 +215,7 @@ def match_input(connection, label, category, exact_match):
             number, label = val
             print(str(key) + ': ' + label + ' (' + number +')\n')
 
-        index = input("Do any of these match your input? (if none, write -1): ")
+        index = raw_input("Do any of these match your input? (if none, write -1): ")
 
     if not index == -1:
         nnum, label = choices.get(index)
