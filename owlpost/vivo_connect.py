@@ -45,7 +45,7 @@ class Connection(object):
             'update': template
         }
         url = self.update_endpoint
-        response = requests.post(url, params=payload)
+        response = requests.post(url, params=payload, verify=False)
         return response
 
     def run_query(self, template):
@@ -57,5 +57,5 @@ class Connection(object):
         }
         url = self.query_endpoint
         headers = {'Accept': 'application/sparql-results+json'}
-        response = requests.get(url, params=payload, headers=headers)
+        response = requests.get(url, params=payload, headers=headers, verify=False)
         return response
