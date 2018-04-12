@@ -48,7 +48,7 @@ def get_template_type(folder):
     for key, val in template_options.items():
         print(str(key) + ': ' + val + '\n')
 
-    index = int(raw_input("Enter number of query: "))
+    index = int(input("Enter number of query: "))
     return template_options.get(index)
 
 
